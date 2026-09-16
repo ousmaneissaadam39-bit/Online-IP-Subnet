@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online IP Subnet Calculator</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #38bdf8;
+            --accent-hover: #0284c7;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --danger-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .calculator-container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 750px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            color: var(--accent-color);
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .field input, .field select {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .field input:focus, .field select:focus {
+            border-color: var(--accent-color);
+        }
+
+        .error-message {
+            color: var(--danger-color);
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        @media (max-width: 600px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-item {
+            background-color: rgba(15, 23, 42, 0.6);
+            padding: 12px 16px;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .result-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .result-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .result-value {
+            font-size: 1.05rem;
+            font-weight: 600;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--text-primary);
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator-container">
+    <header>
+        <h1>Online IP Subnet Calculator</h1>
+        <p>Entrez une adresse IPv4 et choisissez un masque de sous-réseau (CIDR) pour calculer les paramètres réseau.</p>
+    </header>
+
+    <div class="input-group">
+        <div class="field">
+            <label for="ip-address">Adresse IP</label>
+            <input type="text" id="ip-address" value="192.168.1.15" placeholder="ex: 10.0.0.1">
+        </div>
+        <div class="field">
+            <label for="cidr-select">Masque (CIDR)</label>
+            <select id="cidr-select"></select>
+        </div>
+        <div class="field" style="justify-content: flex-end;">
+            <button id="calc-btn" style="background: var(--accent-color); color: #000; font-weight: bold; border: none; padding: 12px; border-radius: 6px; cursor: pointer;">Calculer</button>
+        </div>
+    </div>
+
+    <div id="error" class="error-message">Adresse IP invalide. Veuillez entrer un format IPv4 valide (ex: 192.168.1.1).</div>
+
+    <div class="results-grid">
+        <div class="result-item">
+            <div class="result-label">Adresse IP</div>
+            <div class="result-value" id="res-ip">-</div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Masque de sous-réseau</div>
+            <div class="result-value" id="res-mask">-</div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Adresse Réseau (Network ID)</div>
+            <div class="result-value" id="res-net">-</div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Adresse de Diffusion (Broadcast)</div>
+            <div class="result-value" id="res-bcast">-</div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Première IP Hôte (First Host)</div>
+            <div class="result-value" id="res-first">-</div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Dernière IP Hôte (Last Host)</div>
+            <div class="result-value" id="res-last">-</div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Wildcard Mask</div>
+            <div class="result-value" id="res-wildcard">-</div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Nombre d'hôtes utilisables</div>
+            <div class="result-value" id="res-hosts">-</div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Classe d'adresse</div>
+            <div class="result-value" id="res-class">-</div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Type d'adresse</div>
+            <div class="result-value" id="res-type">-</div>
+        </div>
+        <div class="result-item full-width">
+            <div class="result-label">IP en Binaire</div>
+            <div class="result-value" id="res-binary">-</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialiser le menu déroulant CIDR (/1 à /32)
+    const cidrSelect = document.getElementById('cidr-select');
+    for (let i = 32; i >= 1; i--) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.text = `/${i}`;
+        if (i === 24) option.selected = true;
+        cidrSelect.appendChild(option);
+    }
+
+    function ipToInt(ip) {
+        return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
+    }
+
+    function intToIp(int) {
+        return [
+            (int >>> 24) & 255,
+            (int >>> 16) & 255,
+            (int >>> 8) & 255,
+            int & 255
+        ].join('.');
+    }
+
+    function intToBinary(int) {
+        return [
+            ((int >>> 24) & 255).toString(2).padStart(8, '0'),
+            ((int >>> 16) & 255).toString(2).padStart(8, '0'),
+            ((int >>> 8) & 255).toString(2).padStart(8, '0'),
+            (int & 255).toString(2).padStart(8, '0')
+        ].join('.');
+    }
+
+    function isValidIPv4(ip) {
+        const regex = /^^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        return regex.test(ip);
+    }
+
+    function getIPClass(firstOctet) {
+        if (firstOctet >= 1 && firstOctet <= 126) return 'Classe A';
+        if (firstOctet === 127) return 'Loopback';
+        if (firstOctet >= 128 && firstOctet <= 191) return 'Classe B';
+        if (firstOctet >= 192 && firstOctet <= 223) return 'Classe C';
+        if (firstOctet >= 224 && firstOctet <= 239) return 'Classe D (Multicast)';
+        return 'Classe E (Réservée)';
+    }
+
+    function getIPType(ipInt) {
+        const o1 = (ipInt >>> 24) & 255;
+        const o2 = (ipInt >>> 16) & 255;
+
+        // Détection IP Privée (RFC 1918)
+        if (o1 === 10) return 'Privée (RFC 1918)';
+        if (o1 === 172 && o2 >= 16 && o2 <= 31) return 'Privée (RFC 1918)';
+        if (o1 === 192 && o2 === 168) return 'Privée (RFC 1918)';
+        if (o1 === 127) return 'Loopback';
+
+        return 'Publique';
+    }
+
+    function calculate() {
+        const ipStr = document.getElementById('ip-address').value.trim();
+        const cidr = parseInt(document.getElementById('cidr-select').value, 10);
+        const errorEl = document.getElementById('error');
+
+        if (!isValidIPv4(ipStr)) {
+            errorEl.style.display = 'block';
+            return;
+        }
+        errorEl.style.display = 'none';
+
+        const ipInt = ipToInt(ipStr);
+        const maskInt = (0xFFFFFFFF << (32 - cidr)) >>> 0;
+        const wildcardInt = (~maskInt) >>> 0;
+        const netInt = (ipInt & maskInt) >>> 0;
+        const bcastInt = (netInt | wildcardInt) >>> 0;
+
+        let totalHosts = Math.pow(2, 32 - cidr);
+        let usableHosts = cidr >= 31 ? (cidr === 31 ? 2 : 1) : totalHosts - 2;
+
+        let firstHostStr, lastHostStr;
+        if (cidr === 32) {
+            firstHostStr = intToIp(netInt);
+            lastHostStr = intToIp(netInt);
+        } else if (cidr === 31) {
+            firstHostStr = intToIp(netInt);
+            lastHostStr = intToIp(bcastInt);
+        } else {
+            firstHostStr = intToIp(netInt + 1);
+            lastHostStr = intToIp(bcastInt - 1);
+        }
+
+        const firstOctet = (ipInt >>> 24) & 255;
+
+        // Mise à jour de l'affichage
+        document.getElementById('res-ip').innerText = `${intToIp(ipInt)} /${cidr}`;
+        document.getElementById('res-mask').innerText = intToIp(maskInt);
+        document.getElementById('res-net').innerText = intToIp(netInt);
+        document.getElementById('res-bcast').innerText = intToIp(bcastInt);
+        document.getElementById('res-first').innerText = firstHostStr;
+        document.getElementById('res-last').innerText = lastHostStr;
+        document.getElementById('res-wildcard').innerText = intToIp(wildcardInt);
+        document.getElementById('res-hosts').innerText = usableHosts.toLocaleString();
+        document.getElementById('res-class').innerText = getIPClass(firstOctet);
+        document.getElementById('res-type').innerText = getIPType(ipInt);
+        document.getElementById('res-binary').innerText = intToBinary(ipInt);
+    }
+
+    document.getElementById('calc-btn').addEventListener('click', calculate);
+    document.getElementById('ip-address').addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') calculate();
+    });
+    document.getElementById('cidr-select').addEventListener('change', calculate);
+
+    // Calcul initial au chargement
+    calculate();
+</script>
+
+</body>
+</html>
