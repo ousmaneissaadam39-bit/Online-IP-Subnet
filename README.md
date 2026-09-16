@@ -39,4 +39,4 @@ Un calculateur de sous-réseau IP en ligne, rapide, intuitif et responsive. Cet 
 
 1. **Cloner le dépôt :**
    ```bash
-   git clone [https://github.com/votre-utilisateur/ip-subnet-calculator.git](https://github.com/votre-utilisateur/ip-subnet-calculator.git)
+   git clone [ git clone https://github.com/ousmaneissaadam39-bit/Online-IP-Subnet]( git clone https://github.com/ousmaneissaadam39-bit/Online-IP-Subnet)
